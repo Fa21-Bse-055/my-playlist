@@ -56,12 +56,19 @@ function injectStyles() {
       50% { transform: translateY(-14px); }
     }
 
-    .main-space { flex:1; padding:24px; position:relative; z-index:2; }
+    .main-space {
+      flex:1;
+      padding:24px;
+      position:relative;
+      z-index:2;
+      display:flex;
+      flex-direction:column;
+      gap:20px;
+    }
 
     .card {
       background: rgba(36,0,10,0.6);
       border-radius:24px;
-      margin-bottom:20px;
       padding:18px;
       box-shadow:0 8px 24px rgba(179,0,0,0.5);
       position:relative;
@@ -69,25 +76,42 @@ function injectStyles() {
 
     .section-title { font-size:1.5rem; color: var(--pink-light); margin-bottom:16px; text-align:center; }
 
+    .playlist-container {
+      max-height:400px; /* limit height for scrolling */
+      overflow-y:auto;
+      padding-right:8px; /* avoid scrollbar overlap */
+    }
+
     .playlist-item {
       display:flex;
       justify-content:space-between;
       align-items:center;
       padding:10px 0;
-      border-bottom:1px solid rgba(255,159,193,0.2);
+      border-bottom:1px solid rgba(255, 159, 193, 0.2);
+      position:relative;
+    }
+
+    .playlist-name {
+      flex:1 1 auto;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      margin-right:12px;
+      word-break: break-word;
+    }
+
+    .playlist-actions {
+      flex:0 0 auto;
+      display:flex;
+      gap:8px;
     }
 
     .playlist-actions button {
-      margin-left:8px;
-      padding:8px 16px;
-      border:none;
-      border-radius:14px;
-      cursor:pointer;
-      font-weight:bold;
-      color:#0b000b;
-      background: var(--gradient-btn);
-      box-shadow:0 6px 24px rgba(255,159,193,0.4);
-      transition: transform 0.2s, box-shadow 0.2s;
+      width:40px;
+      height:40px;
+      padding:0;
+      font-size:1.1rem;
+      flex-shrink:0;
     }
 
     .playlist-actions button:hover {
@@ -106,7 +130,7 @@ function injectStyles() {
       position:relative;
     }
 
-    .media-player-box h3 { margin-bottom:12px; color: var(--red-dark); }
+    .media-player-box h3 { margin-bottom:12px; color: var(--red-dark); word-break: break-word; }
 
     .media-player { width:100%; border-radius:14px; outline:none; }
 
@@ -138,21 +162,30 @@ function injectStyles() {
     .nav-btn:hover { background: rgba(255,159,193,0.5); transform: scale(1.05); }
     .nav-active { background: var(--gradient-btn); color:#0b000b; }
 
+    /* sparkles & petals */
     .sparkles, .petals { position:fixed; left:0; right:0; top:0; bottom:0; pointer-events:none; z-index:0; }
-
     .sparkle { width:6px; height:6px; border-radius:50%; background: radial-gradient(circle,#ff9fc1,#b30000); opacity:0.8; animation: rise 3s linear infinite; }
     .petal { font-size:18px; opacity:0.9; animation: petalRise linear infinite; color:#ff9fc1; }
-
     @keyframes rise { 0% { transform: translateY(100vh) scale(0.2); opacity:0; } 50% { opacity:0.8; } 100% { transform: translateY(-50px) scale(1); opacity:0; } }
     @keyframes petalRise { 0% { transform: translateY(100vh) rotate(0deg); opacity:0; } 50% { opacity:0.9; } 100% { transform: translateY(-100px) rotate(360deg); opacity:0; } }
 
     .modal-wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.75); z-index:9999; }
     .modal-card { background: rgba(36,0,10,0.9); padding:22px; border-radius:22px; text-align:center; box-shadow:0 8px 30px rgba(179,0,0,0.6); }
     .modal-card .modal-title { font-size:1.3rem; font-weight:700; margin-bottom:12px; color:var(--red-dark); }
-    .modal-card .modal-name { margin-bottom:16px; color: var(--pink-light); }
+    .modal-card .modal-name { margin-bottom:16px; color: var(--pink-light); word-break: break-word; }
     .modal-card .modal-row button { margin:0 8px; padding:10px 18px; border:none; border-radius:16px; font-weight:700; cursor:pointer; transition:all 0.25s; }
     .btn-cancel { background: rgba(179,0,0,0.5); color:#ffe0f0; }
     .btn-delete { background: var(--gradient-btn); color:#0b000b; }
+
+    /* mobile responsiveness */
+    @media(max-width:768px){
+      header { font-size:2rem; padding:16px; }
+      .section-title { font-size:1.3rem; }
+      .playlist-actions button { width:36px; height:36px; font-size:1rem; }
+      .btn { padding:10px 16px; font-size:0.9rem; }
+      .nav-btn { font-size:1rem; padding:10px 0; }
+      .playlist-container { max-height:300px; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -240,15 +273,17 @@ export default function EnhancedMediaUI() {
       <main className="main-space">
         {view==="playlist" && <div className="card">
           <h2 className="section-title">Your Media</h2>
-          {playlist.map(item=>(
-            <div key={item.id} className="playlist-item">
-              <div className="playlist-name">{item.name}</div>
-              <div className="playlist-actions">
-                <button onClick={()=>togglePlay(item)}>{current?.id===item.id?"⏸️":"▶️"}</button>
-                <button onClick={()=>setConfirmDelete(item)}>🗑️</button>
+          <div className="playlist-container">
+            {playlist.map(item=>(
+              <div key={item.id} className="playlist-item">
+                <div className="playlist-name">{item.name}</div>
+                <div className="playlist-actions">
+                  <button onClick={()=>togglePlay(item)}>{current?.id===item.id?"⏸️":"▶️"}</button>
+                  <button onClick={()=>setConfirmDelete(item)}>🗑️</button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
           {current && <div className="media-player-box">
             <h3>Now Playing: {current.name}</h3>
             <audio ref={audioRef} src={current.url} controls autoPlay className="media-player" />
