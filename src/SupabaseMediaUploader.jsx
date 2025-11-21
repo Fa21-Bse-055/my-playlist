@@ -106,18 +106,25 @@ function injectStyles() {
       gap:8px;
     }
 
-    .playlist-actions button {
-      width:40px;
-      height:40px;
-      padding:0;
-      font-size:1.1rem;
-      flex-shrink:0;
-    }
+   .playlist-actions button {
+  width:40px;
+  height:40px;
+  padding:0;
+  font-size:1.1rem;
+  flex-shrink:0;
+  border:none;
+  border-radius:50%;
+  background: var(--gradient-btn);
+  color:#0b000b;
+  box-shadow:0 4px 16px rgba(255,159,193,0.5);
+  cursor:pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-    .playlist-actions button:hover {
-      transform: scale(1.08);
-      box-shadow:0 8px 30px rgba(255,159,193,0.6);
-    }
+.playlist-actions button:hover {
+  transform: scale(1.1);
+  box-shadow:0 6px 24px rgba(255,159,193,0.7);
+}
 
     .media-player-box {
       margin-top:24px;
@@ -277,10 +284,33 @@ export default function EnhancedMediaUI() {
             {playlist.map(item=>(
               <div key={item.id} className="playlist-item">
                 <div className="playlist-name">{item.name}</div>
-                <div className="playlist-actions">
-                  <button onClick={()=>togglePlay(item)}>{current?.id===item.id?"⏸️":"▶️"}</button>
-                  <button onClick={()=>setConfirmDelete(item)}>🗑️</button>
-                </div>
+<div className="playlist-actions">
+  <button onClick={() => togglePlay(item)} className="play-btn">
+    {current?.id === item.id ? (
+      // Pause icon (two vertical bars)
+      <svg viewBox="-2 0 28 20" fill="#830a0aff" xmlns="http://www.w3.org/2000/svg">
+        <rect x="5" y="4" width="4" height="16" rx="1"/>
+        <rect x="15" y="4" width="4" height="16" rx="1"/>
+      </svg>
+    ) : (
+      // Play icon (triangle)
+      <svg viewBox="-2 0 28 20" fill="#830a0aff" xmlns="http://www.w3.org/2000/svg">
+        <path d="M8 5v14l11-7z"/>
+      </svg>
+    )}
+  </button>
+
+  <button className="delete-btn" onClick={() => setConfirmDelete(item)}>
+    {/* Heart-shaped delete icon */}
+    <svg viewBox="-2 0 28 20" fill="#830a0aff" xmlns="http://www.w3.org/2000/svg">
+    <line x1="4" y1="4" x2="20" y2="20" stroke="#830a0aff" strokeWidth="2" strokeLinecap="round"/>
+    <line x1="20" y1="4" x2="4" y2="20" stroke="#830a0aff" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+  </button>
+</div>
+
+
+
               </div>
             ))}
           </div>
