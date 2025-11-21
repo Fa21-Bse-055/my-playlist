@@ -1,183 +1,282 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 
-// Supabase env
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error("Supabase URL and ANON KEY are required. Check your .env file.");
-}
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) throw new Error("Supabase URL and ANON KEY are required.");
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-export default function SupabaseMediaUploader() {
+function injectStyles() {
+  if (document.getElementById("romantic-effects")) return;
+
+  const style = document.createElement("style");
+  style.id = "romantic-effects";
+  style.textContent = `
+    :root {
+      --bg-black: #0b000b;
+      --red-dark: #b30000;
+      --pink-light: #ff9fc1;
+      --soft-white: #ffe0f0;
+      --gradient-btn: linear-gradient(90deg, #b30000, #ff9fc1);
+    }
+
+    body {
+      margin:0;
+      font-family:'Poppins',sans-serif;
+      background: var(--bg-black);
+      color: var(--soft-white);
+      overflow-x:hidden;
+      position:relative;
+    }
+
+    .enhanced-container {
+      display:flex;
+      flex-direction:column;
+      min-height:100vh;
+      position:relative;
+      z-index:1;
+    }
+
+    header {
+      text-align:center;
+      font-family:'Great Vibes',cursive;
+      font-size:2.4rem;
+      padding:20px;
+      color: var(--red-dark);
+      text-shadow:0 4px 16px rgba(255,159,193,0.4);
+      animation: bounceHeader 4s ease-in-out infinite;
+      z-index:2;
+      position:relative;
+    }
+
+    @keyframes bounceHeader {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-14px); }
+    }
+
+    .main-space { flex:1; padding:24px; position:relative; z-index:2; }
+
+    .card {
+      background: rgba(36,0,10,0.6);
+      border-radius:24px;
+      margin-bottom:20px;
+      padding:18px;
+      box-shadow:0 8px 24px rgba(179,0,0,0.5);
+      position:relative;
+    }
+
+    .section-title { font-size:1.5rem; color: var(--pink-light); margin-bottom:16px; text-align:center; }
+
+    .playlist-item {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      padding:10px 0;
+      border-bottom:1px solid rgba(255,159,193,0.2);
+    }
+
+    .playlist-actions button {
+      margin-left:8px;
+      padding:8px 16px;
+      border:none;
+      border-radius:14px;
+      cursor:pointer;
+      font-weight:bold;
+      color:#0b000b;
+      background: var(--gradient-btn);
+      box-shadow:0 6px 24px rgba(255,159,193,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .playlist-actions button:hover {
+      transform: scale(1.08);
+      box-shadow:0 8px 30px rgba(255,159,193,0.6);
+    }
+
+    .media-player-box {
+      margin-top:24px;
+      padding:20px;
+      background: rgba(36,0,10,0.7);
+      border-radius:28px;
+      text-align:center;
+      backdrop-filter:blur(6px);
+      box-shadow:0 0 24px rgba(255,159,193,0.5);
+      position:relative;
+    }
+
+    .media-player-box h3 { margin-bottom:12px; color: var(--red-dark); }
+
+    .media-player { width:100%; border-radius:14px; outline:none; }
+
+    .btn { cursor:pointer; border:none; border-radius:14px; padding:12px 20px; font-weight:700; font-size:1rem; }
+    .btn-primary { background: var(--gradient-btn); color:#0b000b; box-shadow:0 6px 24px rgba(255,159,193,0.4); transition: transform 0.2s; }
+    .btn-primary:hover { transform: scale(1.05); }
+
+    .bottom-nav {
+      display:flex;
+      justify-content:space-around;
+      background: rgba(36,0,10,0.85);
+      padding:16px 0;
+      border-top:1px solid rgba(255,159,193,0.3);
+      position:relative;
+      z-index:2;
+    }
+    .nav-btn {
+      flex:1;
+      text-align:center;
+      font-weight:bold;
+      font-size:1.2rem;
+      padding:12px 0;
+      border-radius:16px;
+      color: var(--soft-white);
+      background: rgba(179,0,0,0.4);
+      margin:0 6px;
+      transition: all 0.25s;
+    }
+    .nav-btn:hover { background: rgba(255,159,193,0.5); transform: scale(1.05); }
+    .nav-active { background: var(--gradient-btn); color:#0b000b; }
+
+    .sparkles, .petals { position:fixed; left:0; right:0; top:0; bottom:0; pointer-events:none; z-index:0; }
+
+    .sparkle { width:6px; height:6px; border-radius:50%; background: radial-gradient(circle,#ff9fc1,#b30000); opacity:0.8; animation: rise 3s linear infinite; }
+    .petal { font-size:18px; opacity:0.9; animation: petalRise linear infinite; color:#ff9fc1; }
+
+    @keyframes rise { 0% { transform: translateY(100vh) scale(0.2); opacity:0; } 50% { opacity:0.8; } 100% { transform: translateY(-50px) scale(1); opacity:0; } }
+    @keyframes petalRise { 0% { transform: translateY(100vh) rotate(0deg); opacity:0; } 50% { opacity:0.9; } 100% { transform: translateY(-100px) rotate(360deg); opacity:0; } }
+
+    .modal-wrap { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.75); z-index:9999; }
+    .modal-card { background: rgba(36,0,10,0.9); padding:22px; border-radius:22px; text-align:center; box-shadow:0 8px 30px rgba(179,0,0,0.6); }
+    .modal-card .modal-title { font-size:1.3rem; font-weight:700; margin-bottom:12px; color:var(--red-dark); }
+    .modal-card .modal-name { margin-bottom:16px; color: var(--pink-light); }
+    .modal-card .modal-row button { margin:0 8px; padding:10px 18px; border:none; border-radius:16px; font-weight:700; cursor:pointer; transition:all 0.25s; }
+    .btn-cancel { background: rgba(179,0,0,0.5); color:#ffe0f0; }
+    .btn-delete { background: var(--gradient-btn); color:#0b000b; }
+  `;
+  document.head.appendChild(style);
+}
+
+function spawnAnimations() {
+  const sparkleContainer = document.createElement("div");
+  sparkleContainer.className = "sparkles";
+  document.body.appendChild(sparkleContainer);
+
+  const petalContainer = document.createElement("div");
+  petalContainer.className = "petals";
+  document.body.appendChild(petalContainer);
+
+  for (let i = 0; i < 25; i++) {
+    const s = document.createElement("div");
+    s.className = "sparkle";
+    s.style.left = `${Math.random() * 100}%`;
+    s.style.width = `${4 + Math.random() * 6}px`;
+    s.style.height = s.style.width;
+    s.style.animationDuration = `${2 + Math.random() * 3}s`;
+    sparkleContainer.appendChild(s);
+  }
+
+  for (let i = 0; i < 15; i++) {
+    const p = document.createElement("div");
+    p.className = "petal";
+    p.textContent = "🌸";
+    p.style.left = `${Math.random() * 100}%`;
+    p.style.fontSize = `${12 + Math.random() * 18}px`;
+    p.style.animationDuration = `${4 + Math.random() * 4}s`;
+    petalContainer.appendChild(p);
+  }
+}
+
+export default function EnhancedMediaUI() {
+  const [view, setView] = useState("playlist");
   const [files, setFiles] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [current, setCurrent] = useState(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const audioRef = useRef(null);
-  const videoRef = useRef(null);
 
-  useEffect(() => {
-    fetchPlaylist();
-  }, []);
+  useEffect(() => { fetchPlaylist(); injectStyles(); spawnAnimations(); }, []);
 
   async function fetchPlaylist() {
-    try {
-      const { data, error } = await supabase
-        .from("playlist")
-        .select("id, name, url, type, uploaded_at")
-        .order("uploaded_at", { ascending: false });
-
-      if (error) throw error;
-      setPlaylist(data || []);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to fetch playlist.");
-    }
+    const { data } = await supabase.from("playlist").select("id,name,url,type,path,uploaded_at").order("uploaded_at", { ascending: false });
+    setPlaylist(data || []);
   }
 
-  function handleFileChange(e) {
-    setFiles(Array.from(e.target.files || []));
-  }
-
-  async function uploadFileToSupabase(file) {
-    try {
-      const cleanName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-      const path = `uploads/${Date.now()}-${cleanName}`;
-
-      const { error: uploadError } = await supabase.storage.from("media").upload(path, file);
-      if (uploadError) throw uploadError;
-
-      const { data: publicData } = supabase.storage.from("media").getPublicUrl(path);
-      const publicUrl = publicData.publicUrl;
-
-      const { error: insertError } = await supabase.from("playlist").insert({
-        name: file.name,
-        url: publicUrl,
-        type: file.type,
-      });
-      if (insertError) throw insertError;
-
-      return publicUrl;
-    } catch (err) {
-      console.error(err);
-      alert(`Failed to upload ${file.name}`);
-      return null;
-    }
+  async function uploadFile(file) {
+    const cleanName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `uploads/${Date.now()}-${cleanName}`;
+    await supabase.storage.from("media").upload(path, file);
+    const { data: publicData } = supabase.storage.from("media").getPublicUrl(path);
+    await supabase.from("playlist").insert({ name: file.name, url: publicData.publicUrl, type: file.type, path });
   }
 
   async function uploadAll() {
     if (!files.length) return alert("Select files first.");
-    setUploading(true);
-    setProgress(0);
-
-    for (let i = 0; i < files.length; i++) {
-      const f = files[i];
-      const url = await uploadFileToSupabase(f);
-      if (!url) break;
-      setProgress(Math.round(((i + 1) / files.length) * 100));
-    }
-
-    await fetchPlaylist();
-    setFiles([]);
-    setUploading(false);
+    setUploading(true); setProgress(0);
+    for (let i = 0; i < files.length; i++) { await uploadFile(files[i]); setProgress(Math.round(((i+1)/files.length)*100)); }
+    fetchPlaylist(); setFiles([]); setUploading(false); setView("playlist");
   }
 
-  function playItem(item) {
-    setCurrent(item);
-    setIsPlaying(false);
-
-    if (item.type.startsWith("video")) {
-      audioRef.current?.pause();
-      setTimeout(() => videoRef.current?.play(), 50);
-      return;
-    }
-
-    // audio
-    setTimeout(() => {
-      audioRef.current.src = item.url;
-      audioRef.current.play()
-        .then(() => setIsPlaying(true))
-        .catch(console.error);
-    }, 50);
+  async function deleteItem(item) {
+    if (!item) return;
+    if (item.path) await supabase.storage.from("media").remove([item.path]);
+    await supabase.from("playlist").delete().eq("id", item.id);
+    if (current?.id === item.id) setCurrent(null);
+    fetchPlaylist();
   }
 
-  function togglePlayPause() {
-    const audioEl = audioRef.current;
-    if (!audioEl) return;
-
-    if (audioEl.paused) {
-      audioEl.play().then(() => setIsPlaying(true)).catch(console.error);
-    } else {
-      audioEl.pause();
-      setIsPlaying(false);
-    }
-  }
+  const togglePlay = (item) => {
+    if (current?.id === item.id) { audioRef.current.pause(); setCurrent(null); }
+    else { setCurrent(item); setTimeout(()=>audioRef.current?.play(),100); }
+  };
 
   return (
-    <div style={{ maxWidth: 980, margin: "28px auto", padding: 16, fontFamily: "Inter, system-ui, sans-serif" }}>
-      <h1 style={{ fontFamily: "'Great Vibes', cursive", fontSize: 36, color: "#ffd56b", marginBottom: 12 }}>Your Romantic Playlist</h1>
+    <div className="enhanced-container">
+      <header>H ❤ H — Forever</header>
 
-      {/* Upload */}
-      <div style={{ marginBottom: 18, background: "rgba(255,255,255,0.04)", padding: 14, borderRadius: 12, border: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-          <input type="file" accept="audio/*,video/*" multiple onChange={handleFileChange} />
-          <button onClick={uploadAll} disabled={uploading || !files.length} style={{ padding: "8px 12px", background: "linear-gradient(90deg,#ffd56b,#ffb84d)", border: "none", borderRadius: 10, cursor: "pointer" }}>
-            {uploading ? `Uploading ${progress}%` : "Upload Selected"}
-          </button>
-          <button onClick={() => setFiles([])} disabled={uploading || !files.length} style={{ padding: "8px 12px", background: "transparent", border: "1px solid rgba(255,255,255,0.06)", color: "#fff", borderRadius: 10 }}>
-            Clear
-          </button>
-        </div>
-      </div>
-
-      {/* Playlist & Player */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 18 }}>
-        {/* Playlist */}
-        <div style={{ background: "rgba(255,255,255,0.03)", padding: 14, borderRadius: 12, border: "1px solid rgba(255,255,255,0.05)" }}>
-          <h2 style={{ marginTop: 0, color: "#fff3fc" }}>Playlist</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {playlist.length === 0 && <div style={{ color: "#ffebf7" }}>No media yet.</div>}
-            {playlist.map(item => (
-              <div key={item.id} onClick={() => playItem(item)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: 12, borderRadius: 10, cursor: "pointer", background: current?.id === item.id ? "linear-gradient(90deg,#ffe6a8, #ffd9c4)" : "transparent" }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: current?.id === item.id ? "#2c002e" : "#fff3fc" }}>{item.name}</div>
-                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>{new Date(item.uploaded_at).toLocaleString()}</div>
-                </div>
-                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <button style={{ padding: "6px 10px", borderRadius: 10, border: "none", background: "linear-gradient(90deg,#ff9ec9,#ffb6d5)", color: "#2c002e", cursor: "pointer" }}>Play</button>
-                  <a href={item.url} target="_blank" rel="noreferrer" style={{ padding: "6px 10px", background: "#fff3fc", borderRadius: 8, textDecoration: "none", color: "#2c002e" }}>Open</a>
-                </div>
+      <main className="main-space">
+        {view==="playlist" && <div className="card">
+          <h2 className="section-title">Your Media</h2>
+          {playlist.map(item=>(
+            <div key={item.id} className="playlist-item">
+              <div className="playlist-name">{item.name}</div>
+              <div className="playlist-actions">
+                <button onClick={()=>togglePlay(item)}>{current?.id===item.id?"⏸️":"▶️"}</button>
+                <button onClick={()=>setConfirmDelete(item)}>🗑️</button>
               </div>
-            ))}
+            </div>
+          ))}
+          {current && <div className="media-player-box">
+            <h3>Now Playing: {current.name}</h3>
+            <audio ref={audioRef} src={current.url} controls autoPlay className="media-player" />
+          </div>}
+        </div>}
+
+        {view==="upload" && <div className="card">
+          <h2 className="section-title">Upload Media</h2>
+          <input type="file" accept="audio/*" multiple onChange={e=>setFiles([...e.target.files])}/>
+          <button className="btn btn-primary" onClick={uploadAll} disabled={uploading}>{uploading?`Uploading ${progress}%`:"Upload Selected"}</button>
+        </div>}
+      </main>
+
+      <nav className="bottom-nav">
+        <button className={`nav-btn ${view==="playlist"?"nav-active":""}`} onClick={()=>setView("playlist")}>Playlist</button>
+        <button className={`nav-btn ${view==="upload"?"nav-active":""}`} onClick={()=>setView("upload")}>Upload</button>
+      </nav>
+
+      {confirmDelete && <div className="modal-wrap">
+        <div className="modal-card">
+          <div className="modal-title">Delete this media?</div>
+          <div className="modal-name">{confirmDelete.name}</div>
+          <div className="modal-row">
+            <button className="btn-cancel" onClick={()=>setConfirmDelete(null)}>Cancel</button>
+            <button className="btn-delete" onClick={()=>{ deleteItem(confirmDelete); setConfirmDelete(null); }}>Delete</button>
           </div>
         </div>
-
-        {/* Player */}
-        <div style={{ background: "linear-gradient(135deg,#ffd56b,#ffb6d5)", padding: 16, borderRadius: 14, boxShadow: "0 12px 38px rgba(0,0,0,0.25)" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 18, fontWeight: 800, color: "#2c002e" }}>{current ? current.name : "Nothing playing"}</div>
-              <div style={{ fontSize: 12, color: "#3b002b" }}>{current ? new Date(current.uploaded_at).toLocaleString() : "Select a track to play"}</div>
-            </div>
-            {/* Heartbeat play/pause button */}
-            <div>
-              <button onClick={togglePlayPause} aria-label="play-pause" className={`heart-btn ${isPlaying ? "playing" : ""}`} style={{ border: "none", background: "transparent", cursor: "pointer" }}>
-                <span className="heart">❤</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Hidden audio/video */}
-          <audio ref={audioRef} controls style={{ width: "100%", marginTop: 14, display: "block", background: "transparent" }} />
-          <video ref={videoRef} controls style={{ width: "100%", marginTop: 14, borderRadius: 8, display: "none" }} />
-        </div>
-      </div>
+      </div>}
     </div>
   );
 }
